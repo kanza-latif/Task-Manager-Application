@@ -1,0 +1,58 @@
+package rabbitmq
+
+import (
+	"sync"
+
+	"github.com/go-resty/resty/v2"
+	amqp "github.com/rabbitmq/amqp091-go"
+)
+
+const (
+	RouteSessionStart = "session.start"
+	RouteSessionStop  = "session.stop"
+	RouteSessionFinal = "session.final"
+
+	RouteSessionStats  = "session.stats"
+	RouteCGNATLoad     = "bootstrap.cgnat"
+	RouteWhitelistLoad = "bootstrap.whitelist"
+)
+
+var Queues = []string{
+	RouteSessionStart,
+	RouteSessionStop,
+	RouteSessionFinal,
+	RouteSessionStats,
+	RouteCGNATLoad,
+	RouteWhitelistLoad,
+}
+
+type Config struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	Vhost    string
+	Exchange string
+
+	AdminUser     string
+	AdminPassword string
+}
+
+type Admin struct {
+	host   string
+	client *resty.Client
+}
+
+type Client struct {
+	cfg Config
+
+	conn *amqp.Connection
+	ch   *amqp.Channel
+
+	admin Admin
+}
+
+var (
+	GlobalClient *Client
+	initOnce     sync.Once
+)
