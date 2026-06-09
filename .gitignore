@@ -1,0 +1,45 @@
+# Compiled Object files, Signatures, Objects
+*.a
+*.o
+*.so
+
+# Compiled Binaries and Executables
+# (If you prefer to name your main binaries without extensions, add them explicitly by name, e.g., /my-app)
+*.exe
+*.exe~
+*.dll
+*.dylib
+*.sys
+
+# Test artifacts and coverage files
+*.test
+*.out
+coverage.txt
+profile.out
+
+# Go Workspaces (used for local multi-module development)
+go.work
+go.work.sum
+
+# Local environment variables and sensitive configurations
+.env
+.env.*
+!.env.example
+config.local.yaml
+config.local.json
+
+# IDE and Editor specific configurations
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+./config/*
+
