@@ -3,8 +3,9 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"taskmanager/internal/db/models"
 	"time"
+
+	"taskmanager/internal/domain"
 )
 
 type SessionRepository struct {
@@ -16,7 +17,7 @@ func NewSessionRepository(db *sql.DB) *SessionRepository {
 }
 
 // List returns sessions with an optional limit.
-func (r *SessionRepository) List(limit int) ([]*models.Session, error) {
+func (r *SessionRepository) List(limit int) ([]*domain.Session, error) {
 	rows, err := r.db.Query(
 		`SELECT id, session_id, msisdn, site, private_ip, COALESCE(public_ip, ''),
 		 COALESCE(ipv6, ''), COALESCE(start_port, 0), COALESCE(end_port, 0),
@@ -31,7 +32,7 @@ func (r *SessionRepository) List(limit int) ([]*models.Session, error) {
 }
 
 // FindByMSISDN returns all sessions for a given MSISDN.
-func (r *SessionRepository) FindByMSISDN(msisdn string) ([]*models.Session, error) {
+func (r *SessionRepository) FindByMSISDN(msisdn string) ([]*domain.Session, error) {
 	rows, err := r.db.Query(
 		`SELECT id, session_id, msisdn, site, private_ip, COALESCE(public_ip, ''),
 		 COALESCE(ipv6, ''), COALESCE(start_port, 0), COALESCE(end_port, 0),
@@ -46,7 +47,7 @@ func (r *SessionRepository) FindByMSISDN(msisdn string) ([]*models.Session, erro
 }
 
 // FindByTimeRange returns sessions within a start and end time.
-func (r *SessionRepository) FindByTimeRange(from, to time.Time) ([]*models.Session, error) {
+func (r *SessionRepository) FindByTimeRange(from, to time.Time) ([]*domain.Session, error) {
 	rows, err := r.db.Query(
 		`SELECT id, session_id, msisdn, site, private_ip, COALESCE(public_ip, ''),
 		 COALESCE(ipv6, ''), COALESCE(start_port, 0), COALESCE(end_port, 0),
@@ -63,10 +64,10 @@ func (r *SessionRepository) FindByTimeRange(from, to time.Time) ([]*models.Sessi
 
 // helpers
 
-func scanSessionRows(rows *sql.Rows) ([]*models.Session, error) {
-	var results []*models.Session
+func scanSessionRows(rows *sql.Rows) ([]*domain.Session, error) {
+	var results []*domain.Session
 	for rows.Next() {
-		s := &models.Session{}
+		s := &domain.Session{}
 		var privRaw, pubRaw []byte
 		if err := rows.Scan(
 			&s.ID, &s.SessionID, &s.MSISDN, &s.Site,

@@ -3,7 +3,8 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"taskmanager/internal/db/models"
+
+	"taskmanager/internal/domain"
 )
 
 type AlarmRepository struct {
@@ -15,7 +16,7 @@ func NewAlarmRepository(db *sql.DB) *AlarmRepository {
 }
 
 // List returns all alarms ordered by time raised in descending order.
-func (r *AlarmRepository) List() ([]*models.Alarm, error) {
+func (r *AlarmRepository) List() ([]*domain.Alarm, error) {
 	rows, err := r.db.Query(
 		`SELECT id, alarm_id, block_id, site, time_raised, severity, Module,
 		 COALESCE(message, ''), status, updated_by
@@ -29,7 +30,7 @@ func (r *AlarmRepository) List() ([]*models.Alarm, error) {
 }
 
 // FindBySeverity returns alarms filtered by severity.
-func (r *AlarmRepository) FindBySeverity(severity string) ([]*models.Alarm, error) {
+func (r *AlarmRepository) FindBySeverity(severity string) ([]*domain.Alarm, error) {
 	rows, err := r.db.Query(
 		`SELECT id, alarm_id, block_id, site, time_raised, severity, Module,
 		 COALESCE(message, ''), status, updated_by
@@ -43,7 +44,7 @@ func (r *AlarmRepository) FindBySeverity(severity string) ([]*models.Alarm, erro
 }
 
 // FindByStatus returns alarms filtered by status.
-func (r *AlarmRepository) FindByStatus(status string) ([]*models.Alarm, error) {
+func (r *AlarmRepository) FindByStatus(status string) ([]*domain.Alarm, error) {
 	rows, err := r.db.Query(
 		`SELECT id, alarm_id, block_id, site, time_raised, severity, Module,
 		 COALESCE(message, ''), status, updated_by
@@ -57,7 +58,7 @@ func (r *AlarmRepository) FindByStatus(status string) ([]*models.Alarm, error) {
 }
 
 // FindBySite returns alarms for a specific site.
-func (r *AlarmRepository) FindBySite(site string) ([]*models.Alarm, error) {
+func (r *AlarmRepository) FindBySite(site string) ([]*domain.Alarm, error) {
 	rows, err := r.db.Query(
 		`SELECT id, alarm_id, block_id, site, time_raised, severity, Module,
 		 COALESCE(message, ''), status, updated_by
@@ -72,10 +73,10 @@ func (r *AlarmRepository) FindBySite(site string) ([]*models.Alarm, error) {
 
 // helpers
 
-func scanAlarmRows(rows *sql.Rows) ([]*models.Alarm, error) {
-	var results []*models.Alarm
+func scanAlarmRows(rows *sql.Rows) ([]*domain.Alarm, error) {
+	var results []*domain.Alarm
 	for rows.Next() {
-		a := &models.Alarm{}
+		a := &domain.Alarm{}
 		if err := rows.Scan(
 			&a.ID, &a.AlarmID, &a.BlockID, &a.Site,
 			&a.TimeRaised, &a.Severity, &a.Module,

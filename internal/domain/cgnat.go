@@ -1,4 +1,4 @@
-package models
+package domain
 
 // CGNAT represents a row in cgnat_table.
 // private_ip and public_ip are stored as VARBINARY(16) in MySQL,

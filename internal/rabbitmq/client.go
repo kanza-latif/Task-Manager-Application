@@ -39,6 +39,7 @@ func New() error {
 	GlobalClient.conn = conn
 	GlobalClient.ch = ch
 
+	logAt(1, "connected to rabbitmq at %s:%d", GlobalClient.cfg.Host, GlobalClient.cfg.Port)
 	return err
 }
 
@@ -56,5 +57,6 @@ func Close() {
 		_ = GlobalClient.conn.Close()
 	}
 
+	logAt(2, "rabbitmq connection closed")
 	GlobalClient = nil
 }

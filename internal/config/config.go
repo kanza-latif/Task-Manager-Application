@@ -10,7 +10,8 @@ import (
 
 type Config struct {
 	Verbosity int
-	
+
+	// RabbitMQ
 	RabbitMQHost string
 	RabbitMQPort int
 
@@ -22,6 +23,26 @@ type Config struct {
 
 	RabbitMQAdminUser     string
 	RabbitMQAdminPassword string
+
+	// MySQL
+	MySQLHost     string
+	MySQLPort     int
+	MySQLUser     string
+	MySQLPassword string
+	MySQLDatabase string
+	MySQLSchema   string
+
+	MySQLMaxOpenConns    int
+	MySQLMaxIdleConns    int
+	MySQLConnMaxLifetime int
+
+	PartitionDays        int
+	RetentionPeriod      int
+	RetentionCleanupHour int
+
+	// DB Workers
+	DBWorkers   int
+	DBQueueSize int
 }
 
 // LoadConfig parses key=value file
@@ -32,7 +53,10 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	defer f.Close()
 
-	cfg := &Config{}
+	cfg := &Config{
+		PartitionDays:        1,
+		RetentionCleanupHour: 2,
+	}
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -58,7 +82,12 @@ func LoadConfig(path string) (*Config, error) {
 		cfg.apply(key, val)
 	}
 
-	return cfg, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	cfg.normalize()
+	return cfg, nil
 }
 
 func (c *Config) apply(key, val string) {
@@ -81,6 +110,40 @@ func (c *Config) apply(key, val string) {
 		c.RabbitMQVHost = val
 	case "rabbitmq_exchange":
 		c.RabbitMQExchange = val
+
+		// mysql
+	case "mysql_host":
+		c.MySQLHost = val
+	case "mysql_port":
+		c.MySQLPort = parseInt(val)
+	case "mysql_user":
+		c.MySQLUser = val
+	case "mysql_password":
+		c.MySQLPassword = val
+	case "mysql_database":
+		c.MySQLDatabase = val
+	case "mysql_schema":
+		c.MySQLSchema = val
+
+	case "mysql_max_open_conns":
+		c.MySQLMaxOpenConns = parseInt(val)
+	case "mysql_max_idle_conns":
+		c.MySQLMaxIdleConns = parseInt(val)
+	case "mysql_conn_max_lifetime":
+		c.MySQLConnMaxLifetime = parseInt(val)
+
+	case "partition_days":
+		c.PartitionDays = parseInt(val)
+	case "retention_period":
+		c.RetentionPeriod = parseInt(val)
+	case "retention_cleanup_hour", "cleanup_hour":
+		c.RetentionCleanupHour = parseInt(val)
+
+	// database workers
+	case "db_workers":
+		c.DBWorkers = parseInt(val)
+	case "db_queue_size":
+		c.DBQueueSize = parseInt(val)
 	case "verbosity":
 		c.Verbosity = parseInt(val)
 	}
@@ -94,4 +157,16 @@ func parseBool(s string) bool {
 func parseInt(s string) int {
 	v, _ := strconv.Atoi(strings.TrimSpace(s))
 	return v
+}
+
+func (c *Config) normalize() {
+	if c.PartitionDays <= 0 {
+		c.PartitionDays = 1
+	}
+	if c.Verbosity < 0 {
+		c.Verbosity = 0
+	}
+	if c.Verbosity > 5 {
+		c.Verbosity = 5
+	}
 }

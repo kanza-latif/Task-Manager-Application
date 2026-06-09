@@ -1,10 +1,6 @@
 package rabbitmq
 
-import (
-	"log"
-
-	amqp "github.com/rabbitmq/amqp091-go"
-)
+import amqp "github.com/rabbitmq/amqp091-go"
 
 func SetupTopology() error {
 	err := GlobalClient.ch.ExchangeDeclare(
@@ -22,7 +18,7 @@ func SetupTopology() error {
 
 	for _, q := range Queues {
 
-		log.Printf("declaring queue: %s", q)
+		logAt(3, "declaring queue: %s", q)
 
 		_, err := GlobalClient.ch.QueueDeclare(
 			q,
@@ -36,11 +32,11 @@ func SetupTopology() error {
 		)
 
 		if err != nil {
-			log.Printf("error declaring queue: %s", q)
+			logError("error declaring queue %s: %v", q, err)
 			return err
 		}
-		
-		log.Printf("binding queue: %s", q)
+
+		logAt(3, "binding queue: %s", q)
 
 		err = GlobalClient.ch.QueueBind(
 			q,
@@ -51,10 +47,11 @@ func SetupTopology() error {
 		)
 
 		if err != nil {
-			log.Printf("error binding queue: %s", q)
+			logError("error binding queue %s: %v", q, err)
 			return err
 		}
 	}
 
+	logAt(1, "topology ready; queues=%d", len(Queues))
 	return nil
 }

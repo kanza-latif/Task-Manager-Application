@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"log"
 	"sync"
 
 	"github.com/go-resty/resty/v2"
@@ -36,6 +37,8 @@ type Config struct {
 
 	AdminUser     string
 	AdminPassword string
+
+	Verbosity int
 }
 
 type Admin struct {
@@ -56,3 +59,14 @@ var (
 	GlobalClient *Client
 	initOnce     sync.Once
 )
+
+func logAt(level int, format string, args ...any) {
+	if GlobalClient == nil || GlobalClient.cfg.Verbosity < level {
+		return
+	}
+	log.Printf("[rabbitmq] "+format, args...)
+}
+
+func logError(format string, args ...any) {
+	log.Printf("[rabbitmq] ERROR: "+format, args...)
+}

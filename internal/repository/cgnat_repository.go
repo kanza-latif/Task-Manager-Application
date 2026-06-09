@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"taskmanager/internal/db/models"
+
+	"taskmanager/internal/domain"
 )
 
 type CGNATRepository struct {
@@ -18,7 +19,7 @@ func NewCGNATRepository(db *sql.DB) *CGNATRepository {
 }
 
 // List fetches all rows from cgnat_table.
-func (r *CGNATRepository) List() ([]*models.CGNAT, error) {
+func (r *CGNATRepository) List() ([]*domain.CGNAT, error) {
 	rows, err := r.db.Query(
 		`SELECT id, private_ip, public_ip, start_port, end_port FROM cgnat_table ORDER BY id`,
 	)
@@ -30,7 +31,7 @@ func (r *CGNATRepository) List() ([]*models.CGNAT, error) {
 }
 
 // FindByPrivateIP looks up a CGNAT entry by private IP string.
-func (r *CGNATRepository) FindByPrivateIP(ip string) ([]*models.CGNAT, error) {
+func (r *CGNATRepository) FindByPrivateIP(ip string) ([]*domain.CGNAT, error) {
 	if net.ParseIP(ip) == nil {
 		return nil, fmt.Errorf("invalid IP address: %q", ip)
 	}
@@ -46,7 +47,7 @@ func (r *CGNATRepository) FindByPrivateIP(ip string) ([]*models.CGNAT, error) {
 	return scanCGNATRows(rows)
 }
 
-func (r *CGNATRepository) FindByPublicIP(ip string) ([]*models.CGNAT, error) {
+func (r *CGNATRepository) FindByPublicIP(ip string) ([]*domain.CGNAT, error) {
 	if net.ParseIP(ip) == nil {
 		return nil, fmt.Errorf("invalid IP address: %q", ip)
 	}
@@ -65,10 +66,10 @@ func (r *CGNATRepository) FindByPublicIP(ip string) ([]*models.CGNAT, error) {
 
 // helpers
 
-func scanCGNATRows(rows *sql.Rows) ([]*models.CGNAT, error) {
-	var results []*models.CGNAT
+func scanCGNATRows(rows *sql.Rows) ([]*domain.CGNAT, error) {
+	var results []*domain.CGNAT
 	for rows.Next() {
-		var c models.CGNAT
+		var c domain.CGNAT
 		var privRaw, pubRaw []byte
 
 		if err := rows.Scan(&c.ID, &privRaw, &pubRaw, &c.StartPort, &c.EndPort); err != nil {

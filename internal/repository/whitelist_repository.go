@@ -3,7 +3,8 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"taskmanager/internal/db/models"
+
+	"taskmanager/internal/domain"
 )
 
 type WhitelistRepository struct {
@@ -15,7 +16,7 @@ func NewWhitelistRepository(db *sql.DB) *WhitelistRepository {
 }
 
 // List returns all MSISDNs in whitelist_table ordered by id.
-func (r *WhitelistRepository) List() ([]*models.Whitelist, error) {
+func (r *WhitelistRepository) List() ([]*domain.Whitelist, error) {
 	rows, err := r.db.Query(
 		`SELECT id, msisdn FROM whitelist_table ORDER BY id`,
 	)
@@ -24,9 +25,9 @@ func (r *WhitelistRepository) List() ([]*models.Whitelist, error) {
 	}
 	defer rows.Close()
 
-	var results []*models.Whitelist
+	var results []*domain.Whitelist
 	for rows.Next() {
-		w := &models.Whitelist{}
+		w := &domain.Whitelist{}
 		if err := rows.Scan(&w.ID, &w.MSISDN); err != nil {
 			return nil, fmt.Errorf("whitelist scan: %w", err)
 		}

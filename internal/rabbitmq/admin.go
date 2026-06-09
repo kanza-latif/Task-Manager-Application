@@ -111,7 +111,7 @@ func Bootstrap() error {
 
 	if err := EnsurePermissions(GlobalClient.cfg.Vhost, GlobalClient.cfg.User); err != nil {
 		return err
-	}	
+	}
 
 	err := New()
 

@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 )
 
@@ -66,11 +65,12 @@ func startEntryConsumer() error {
 			var s UserSession
 
 			if err := json.Unmarshal(d.Body, &s); err != nil {
+				logError("failed to decode %s message: %v", RouteSessionFinal, err)
 				continue
 			}
 
-			log.Printf("consumed the final stat storing into db")
-			log.Printf("Session: %+v",s)
+			logAt(1, "consumed final session stat")
+			logAt(4, "session payload: %+v", s)
 		}
 	}()
 
