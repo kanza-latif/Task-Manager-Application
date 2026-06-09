@@ -51,32 +51,6 @@ func main() {
 func start(rt *Runtime) {
 
 	cfg := rt.Config
-	// cmd.Execute()
-
-	//DB Setup
-	if err := db.Init(&db.Config{
-		MySQLHost:     cfg.MySQLHost,
-		MySQLPort:     cfg.MySQLPort,
-		MySQLUser:     cfg.MySQLUser,
-		MySQLPassword: cfg.MySQLPassword,
-		MySQLDatabase: cfg.MySQLDatabase,
-		MySQLSchema:   cfg.MySQLSchema,
-
-		MySQLMaxOpenConns:    cfg.MySQLMaxOpenConns,
-		MySQLMaxIdleConns:    cfg.MySQLMaxIdleConns,
-		MySQLConnMaxLifetime: cfg.MySQLConnMaxLifetime,
-
-		PartitionDays:        cfg.PartitionDays,
-		RetentionPeriod:      cfg.RetentionPeriod,
-		RetentionCleanupHour: cfg.RetentionCleanupHour,
-		Verbosity:            cfg.Verbosity,
-
-		// DB Workers
-		DBWorkers:   cfg.DBWorkers,
-		DBQueueSize: cfg.DBQueueSize,
-	}); err != nil {
-		log.Fatal(err)
-	}
 
 	//RABBITMQ Setup
 	rabbitmq.NewAdmin(rabbitmq.Config{
@@ -107,6 +81,31 @@ func start(rt *Runtime) {
 
 	if err := rabbitmq.StartConsumers(); err != nil {
 		log.Fatalf("rabbitmq consumers failed: %v", err)
+	}
+
+	//DB Setup
+	if err := db.Init(&db.Config{
+		MySQLHost:     cfg.MySQLHost,
+		MySQLPort:     cfg.MySQLPort,
+		MySQLUser:     cfg.MySQLUser,
+		MySQLPassword: cfg.MySQLPassword,
+		MySQLDatabase: cfg.MySQLDatabase,
+		MySQLSchema:   cfg.MySQLSchema,
+
+		MySQLMaxOpenConns:    cfg.MySQLMaxOpenConns,
+		MySQLMaxIdleConns:    cfg.MySQLMaxIdleConns,
+		MySQLConnMaxLifetime: cfg.MySQLConnMaxLifetime,
+
+		PartitionDays:        cfg.PartitionDays,
+		RetentionPeriod:      cfg.RetentionPeriod,
+		RetentionCleanupHour: cfg.RetentionCleanupHour,
+		Verbosity:            cfg.Verbosity,
+
+		// DB Workers
+		DBWorkers:   cfg.DBWorkers,
+		DBQueueSize: cfg.DBQueueSize,
+	}); err != nil {
+		log.Fatal(err)
 	}
 
 	for {
