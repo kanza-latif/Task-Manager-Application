@@ -18,7 +18,7 @@ const (
 	sessionMaxPartitionName       = "pmax"
 	sessionPartitionCheckInterval = 24 * time.Hour
 	sessionCleanupCheckInterval   = time.Hour
-	dbOperationTimeout            = 30 * time.Second
+	dbOperationTimeout            = 5 * time.Minute
 	mysqlDateTimeLayout           = "2006-01-02 15:04:05"
 	defaultPartitionDays          = 1
 	defaultRetentionCleanupHour   = 2

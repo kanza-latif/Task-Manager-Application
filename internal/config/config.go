@@ -10,6 +10,8 @@ import (
 
 type Config struct {
 	Verbosity int
+	SiteName  string
+	NodeName  string
 
 	// RabbitMQ
 	RabbitMQHost string
@@ -144,8 +146,13 @@ func (c *Config) apply(key, val string) {
 		c.DBWorkers = parseInt(val)
 	case "db_queue_size":
 		c.DBQueueSize = parseInt(val)
+
 	case "verbosity":
 		c.Verbosity = parseInt(val)
+	case "site_name":
+		c.SiteName = val
+	case "node_name":
+		c.NodeName = val
 	}
 }
 

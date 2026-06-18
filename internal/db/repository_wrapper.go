@@ -12,7 +12,7 @@ func (c *Connection) initRepositories() error {
 	}
 
 	c.Alarm = repository.NewAlarmRepository(c.conn)
-	c.CGNAT = repository.NewCGNATRepository(c.conn)
+	c.CGNAT = repository.NewCGNATRepository(c.conn, c.cfg.SiteName)
 	c.Session = repository.NewSessionRepository(c.conn)
 	c.User = repository.NewUserRepository(c.conn)
 	c.Whitelist = repository.NewWhitelistRepository(c.conn)

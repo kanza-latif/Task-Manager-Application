@@ -4,6 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
 
 	"taskmanager/internal/config"
 	"taskmanager/internal/db"
@@ -19,6 +23,11 @@ func atoi(s string) int {
 type Runtime struct {
 	Config *config.Config
 }
+
+var (
+	rt       Runtime
+	gRunning atomic.Bool
+)
 
 func logAt(verbosity, level int, format string, args ...any) {
 	if verbosity < level {
@@ -44,26 +53,49 @@ func main() {
 	}
 
 	// RUNTIME OBJECT
-	rt := &Runtime{Config: cfg}
-	start(rt)
+	rt.Config = cfg
+	start()
 }
 
-func start(rt *Runtime) {
+func waitForShutdown() {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(
+		sigCh,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGSEGV,
+	)
+	sig := <-sigCh
+	log.Printf("Received signal: %v", sig)
+	shutdown()
+	os.Exit(0)
+}
 
-	cfg := rt.Config
+func shutdown() {
+	logAt(rt.Config.Verbosity, 1, "starting rabbitmq consumers")
+	log.Println("Stopping Task Manager")
+	gRunning.Store(false)
+}
+
+func start() {
+
+	gRunning.Store(true)
 
 	//RABBITMQ Setup
 	rabbitmq.NewAdmin(rabbitmq.Config{
-		Host:     cfg.RabbitMQHost,
-		Port:     cfg.RabbitMQPort,
-		User:     cfg.RabbitMQUser,
-		Password: cfg.RabbitMQPassword,
-		Vhost:    cfg.RabbitMQVHost,
-		Exchange: cfg.RabbitMQExchange,
+		Host:     rt.Config.RabbitMQHost,
+		Port:     rt.Config.RabbitMQPort,
+		User:     rt.Config.RabbitMQUser,
+		Password: rt.Config.RabbitMQPassword,
+		Vhost:    rt.Config.RabbitMQVHost,
+		Exchange: rt.Config.RabbitMQExchange,
 
-		AdminUser:     cfg.RabbitMQAdminUser,
-		AdminPassword: cfg.RabbitMQAdminPassword,
-		Verbosity:     cfg.Verbosity,
+		AdminUser:     rt.Config.RabbitMQAdminUser,
+		AdminPassword: rt.Config.RabbitMQAdminPassword,
+
+		Verbosity: rt.Config.Verbosity,
+		SiteName:  rt.Config.SiteName,
+		NodeName:  rt.Config.NodeName,
 	})
 
 	if err := rabbitmq.Bootstrap(); err != nil {
@@ -71,13 +103,13 @@ func start(rt *Runtime) {
 	}
 	defer rabbitmq.Close()
 
-	logAt(cfg.Verbosity, 1, "bootstrap complete")
+	logAt(rt.Config.Verbosity, 1, "bootstrap complete")
 
 	if err := rabbitmq.SetupTopology(); err != nil {
 		log.Fatal(err)
 	}
 
-	logAt(cfg.Verbosity, 2, "starting rabbitmq consumers")
+	logAt(rt.Config.Verbosity, 2, "starting rabbitmq consumers")
 
 	if err := rabbitmq.StartConsumers(); err != nil {
 		log.Fatalf("rabbitmq consumers failed: %v", err)
@@ -85,29 +117,39 @@ func start(rt *Runtime) {
 
 	//DB Setup
 	if err := db.Init(&db.Config{
-		MySQLHost:     cfg.MySQLHost,
-		MySQLPort:     cfg.MySQLPort,
-		MySQLUser:     cfg.MySQLUser,
-		MySQLPassword: cfg.MySQLPassword,
-		MySQLDatabase: cfg.MySQLDatabase,
-		MySQLSchema:   cfg.MySQLSchema,
+		MySQLHost:     rt.Config.MySQLHost,
+		MySQLPort:     rt.Config.MySQLPort,
+		MySQLUser:     rt.Config.MySQLUser,
+		MySQLPassword: rt.Config.MySQLPassword,
+		MySQLDatabase: rt.Config.MySQLDatabase,
+		MySQLSchema:   rt.Config.MySQLSchema,
 
-		MySQLMaxOpenConns:    cfg.MySQLMaxOpenConns,
-		MySQLMaxIdleConns:    cfg.MySQLMaxIdleConns,
-		MySQLConnMaxLifetime: cfg.MySQLConnMaxLifetime,
+		MySQLMaxOpenConns:    rt.Config.MySQLMaxOpenConns,
+		MySQLMaxIdleConns:    rt.Config.MySQLMaxIdleConns,
+		MySQLConnMaxLifetime: rt.Config.MySQLConnMaxLifetime,
 
-		PartitionDays:        cfg.PartitionDays,
-		RetentionPeriod:      cfg.RetentionPeriod,
-		RetentionCleanupHour: cfg.RetentionCleanupHour,
-		Verbosity:            cfg.Verbosity,
+		PartitionDays:        rt.Config.PartitionDays,
+		RetentionPeriod:      rt.Config.RetentionPeriod,
+		RetentionCleanupHour: rt.Config.RetentionCleanupHour,
+		Verbosity:            rt.Config.Verbosity,
 
 		// DB Workers
-		DBWorkers:   cfg.DBWorkers,
-		DBQueueSize: cfg.DBQueueSize,
+		DBWorkers:   rt.Config.DBWorkers,
+		DBQueueSize: rt.Config.DBQueueSize,
+
+		SiteName:  rt.Config.SiteName,
+		NodeName:  rt.Config.NodeName,
 	}); err != nil {
 		log.Fatal(err)
 	}
 
-	for {
+	if cgnat, whitelist, err := db.InitBootstrap(); err != nil {
+		log.Fatal(err)
+	} else {
+		rabbitmq.PublishCGNAT(cgnat)
+		rabbitmq.PublishWhitelist(whitelist)
+	}
+
+	for gRunning.Load() {
 	}
 }

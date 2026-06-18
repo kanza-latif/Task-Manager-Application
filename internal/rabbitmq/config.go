@@ -16,6 +16,8 @@ const (
 	RouteSessionStats  = "session.stats"
 	RouteCGNATLoad     = "bootstrap.cgnat"
 	RouteWhitelistLoad = "bootstrap.whitelist"
+
+	RouteNodeHeartbeat = "node.heartbeat"
 )
 
 var Queues = []string{
@@ -25,6 +27,7 @@ var Queues = []string{
 	RouteSessionStats,
 	RouteCGNATLoad,
 	RouteWhitelistLoad,
+	RouteNodeHeartbeat,
 }
 
 type Config struct {
@@ -39,6 +42,8 @@ type Config struct {
 	AdminPassword string
 
 	Verbosity int
+	SiteName  string
+	NodeName  string
 }
 
 type Admin struct {

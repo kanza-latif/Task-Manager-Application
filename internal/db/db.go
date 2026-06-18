@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	
 	"taskmanager/internal/repository"
 )
 
@@ -31,6 +31,9 @@ type Config struct {
 	// DB Workers
 	DBWorkers   int
 	DBQueueSize int
+
+	SiteName  string
+	NodeName  string
 }
 
 type Connection struct {
@@ -80,6 +83,7 @@ func Init(cfg *Config) error {
 	}
 
 	GlobalConn = conn
+
 	return nil
 }
 

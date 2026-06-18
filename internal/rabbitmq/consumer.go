@@ -2,6 +2,8 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"taskmanager/internal/db"
+	"taskmanager/internal/domain"
 	"time"
 )
 
@@ -20,18 +22,20 @@ type UserSession struct {
 	IsWhitelist       bool
 
 	AccountSessionID string
-	MultiSessionID   string
 	CallingStationID string
 
-	FramedIPv4 string
-	PublicIPv4 string
-	FramedIPv6 string
+	FramedIPv4    string
+	PublicIPv4    string
+	FramedIPv6    string
+	FramedIPv6Len int
 
 	PortStart uint16
 	PortEnd   uint16
 
 	SessionStart time.Time
 	SessionEnd   time.Time
+
+	byeAcks int
 
 	ExtraAVPs []ExtraAVP
 }
@@ -69,8 +73,22 @@ func startEntryConsumer() error {
 				continue
 			}
 
-			logAt(1, "consumed final session stat")
-			logAt(4, "session payload: %+v", s)
+			db.GlobalConn.Session.Create(
+				&domain.Session{
+					SessionID: s.AccountSessionID,
+					MSISDN:    s.CallingStationID,
+					Site:      GlobalClient.cfg.SiteName,
+					PrivateIP: s.FramedIPv4,
+					PublicIP:  s.PublicIPv4,
+					IPv6:      s.FramedIPv6,
+					StartPort: int(s.PortStart),
+					EndPort:   int(s.PortEnd),
+					Packets:   int(s.PacketCount),
+					WLStatus:  s.IsWhitelist,
+					StartTime: s.SessionStart,
+					EndTime:   s.SessionEnd,
+				},
+			)
 		}
 	}()
 

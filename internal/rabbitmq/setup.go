@@ -20,15 +20,26 @@ func SetupTopology() error {
 
 		logAt(3, "declaring queue: %s", q)
 
+		var amqpTable map[string]interface{}
+
+		if q == RouteNodeHeartbeat {
+			amqpTable = amqp.Table{
+				"x-queue-type":  "quorum",
+				"x-message-ttl": int32(30000), // 30 seconds
+			}
+		} else {
+			amqpTable = amqp.Table{
+				"x-queue-type": "quorum",
+			}
+		}
+
 		_, err := GlobalClient.ch.QueueDeclare(
 			q,
 			true,  // durable
 			false, // auto-delete
 			false, // exclusive
 			false,
-			amqp.Table{
-				"x-queue-type": "quorum",
-			},
+			amqpTable,
 		)
 
 		if err != nil {
